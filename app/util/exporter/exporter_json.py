@@ -5,7 +5,7 @@ import os
 from app.DataBase import msg_db
 from app.person import Me
 from .exporter import ExporterBase
-
+from app.config import OUTPUT_DIR
 
 def merge_content(conversions_list) -> list:
     """
@@ -41,17 +41,17 @@ def merge_content(conversions_list) -> list:
     return merged_data
 
 
-def system_prompt():
+def system_prompt(contact_name):
     system = {
         "role": "system",
         # "content": f"你是{Me().name}，一个聪明、热情、善良的男大学生，后面的对话来自{self.contact.remark}(！！！注意：对方的身份十分重要，你务必记住对方的身份，因为跟不同的人对话要用不同的态度、语气)，你要认真地回答他"
-        "content": f"你是{Me().name}，一个聪明、热情、善良的人，后面的对话来自你的朋友，你要认真地回答他"
+        "content": f"你现在模拟我的说话风格，{contact_name}是我的微信好友，请和对方进行对话。"
     }
     return system
 
 
-def message_to_conversion(group):
-    conversions = [system_prompt()]
+def message_to_conversion(group, contact_name):
+    conversions = [system_prompt(contact_name)]
     while len(group) and group[-1][4] == 0:
         group.pop()
     for message in group:
@@ -156,7 +156,7 @@ class JsonExporter(ExporterBase):
             res.append(current_group)
         res_ = []
         for group in res:
-            conversations = message_to_conversion(group)
+            conversations = message_to_conversion(group, self.contact.remark)
             if conversations:
                 res_.append({
                     'conversations': conversations
@@ -165,17 +165,17 @@ class JsonExporter(ExporterBase):
 
     def to_json(self):
         print(f"【开始导出 json {self.contact.remark}】")
-        origin_path = self.origin_path
+        origin_path = os.path.join(os.getcwd(), OUTPUT_DIR, 'msg', 'raw', self.contact.remark)
         os.makedirs(origin_path, exist_ok=True)
         filename = os.path.join(origin_path, f"{self.contact.remark}")
 
         # res = self.split_by_time()
-        res = self.split_by_intervals(60)
+        res = self.split_by_intervals(60*5)
         # 打乱列表顺序
         random.shuffle(res)
 
         # 计算切分比例
-        split_ratio = 0.2  # 20% for the second list
+        split_ratio = 0.05  # 5% for the second list
 
         # 计算切分点
         split_point = int(len(res) * split_ratio)
