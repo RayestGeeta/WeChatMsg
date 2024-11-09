@@ -167,8 +167,12 @@ class JsonExporter(ExporterBase):
         print(f"【开始导出 json {self.contact.remark}】")
         origin_path = os.path.join(os.getcwd(), OUTPUT_DIR, 'msg', 'raw', self.contact.remark)
         os.makedirs(origin_path, exist_ok=True)
-        filename = os.path.join(origin_path, f"{self.contact.remark}")
-
+        
+        if self.contact.is_chatroom:
+            filename = os.path.join(origin_path, f"is_chatroom_{self.contact.remark}")
+        else:
+            filename = os.path.join(origin_path, f"{self.contact.remark}")
+            
         # res = self.split_by_time()
         res = self.split_by_intervals(60*5)
         # 打乱列表顺序
